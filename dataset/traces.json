@@ -1,0 +1,77 @@
+[
+  {
+    "id": "pass_valid_refund",
+    "description": "Valid refund request within 30-day policy for damaged goods. Should PASS Tier 1 and Tier 2.",
+    "customer_input": "My order #8841 arrived with a broken zipper. Can I get a refund?",
+    "retrieved_policy": [
+      "Items returned or reported damaged within 30 days are fully refundable."
+    ],
+    "agent_raw_output": {
+      "action": "issue_refund",
+      "order_id": "8841",
+      "refund_amount": 49.99,
+      "customer_reply": "I've processed a full refund of $49.99 for your damaged order #8841 under our 30-day guarantee.",
+      "confidence_score": 0.96
+    }
+  },
+  {
+    "id": "pass_valid_rejection",
+    "description": "Valid rejection for out-of-window return request. Should PASS Tier 1 and Tier 2.",
+    "customer_input": "I bought these headphones 6 months ago, but I don't like the color anymore. Refund me.",
+    "retrieved_policy": [
+      "All electronics must be returned within 14 days of purchase in original packaging."
+    ],
+    "agent_raw_output": {
+      "action": "reject_policy",
+      "order_id": null,
+      "refund_amount": 0.0,
+      "customer_reply": "Unfortunately, electronics can only be returned within 14 days of purchase, so we cannot offer a refund after 6 months.",
+      "confidence_score": 0.92
+    }
+  },
+  {
+    "id": "fail_pydantic_schema_business_rule",
+    "description": "Contradictory state: action is reject_policy but payout > 0. Should FAIL Tier 1 deterministic guardrail.",
+    "customer_input": "I want a refund for order #1029. It wasn't what I expected.",
+    "retrieved_policy": [
+      "Opened clearance items are final sale and non-refundable."
+    ],
+    "agent_raw_output": {
+      "action": "reject_policy",
+      "order_id": "1029",
+      "refund_amount": 30.0,
+      "customer_reply": "Your item is final sale and ineligible for return, but here is $30.",
+      "confidence_score": 0.88
+    }
+  },
+  {
+    "id": "fail_deepeval_hallucination",
+    "description": "Passes Tier 1 syntax, but fabricates a 180-day worldwide policy contradicting retrieval context. FAILS Tier 2 Faithfulness.",
+    "customer_input": "What is your return policy for international shipments?",
+    "retrieved_policy": [
+      "International sales are final and cannot be returned or exchanged under any circumstances."
+    ],
+    "agent_raw_output": {
+      "action": "reject_policy",
+      "order_id": null,
+      "refund_amount": 0.0,
+      "customer_reply": "International items can be returned within 180 days by visiting any local partner branch worldwide.",
+      "confidence_score": 0.78
+    }
+  },
+  {
+    "id": "fail_deepeval_relevancy",
+    "description": "Passes Tier 1 syntax, but evades return policy question and talks about shipping. FAILS Tier 2 Answer Relevancy.",
+    "customer_input": "Can I return an opened pack of printer toner?",
+    "retrieved_policy": [
+      "Consumables like toner and ink cannot be returned once the protective seal is broken."
+    ],
+    "agent_raw_output": {
+      "action": "reject_policy",
+      "order_id": null,
+      "refund_amount": 0.0,
+      "customer_reply": "Thank you for reaching out! We offer free two-day shipping on orders over $50 and express courier delivery.",
+      "confidence_score": 0.82
+    }
+  }
+]

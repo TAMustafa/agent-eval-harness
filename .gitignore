@@ -1,0 +1,30 @@
+# Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest & Testing Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# DeepEval Cache & Artifacts
+.deepeval/
+
+# macOS OS Metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+
+blog_post_agent_evals.md
