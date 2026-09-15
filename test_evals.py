@@ -51,17 +51,39 @@ def test_tier1_deterministic_guardrails(trace: dict):
     Tier 1 Evaluation:
     Asserts schema compliance, field ranges, and strict business invariants
     without making any LLM calls (zero latency, zero API cost).
+
+    Covers all three business-rule guardrails defined in schemas.py:
+      Rule 1 — A rejection must never authorise a non-zero payout.
+      Rule 2 — An authorised refund requires a traceable order_id.
+      Rule 3 — High-confidence actions must not be routed to human escalation.
     """
     raw_output = trace["agent_raw_output"]
 
     if trace["id"] == "fail_pydantic_schema_business_rule":
-        # Trace is deliberately designed to violate business rules (reject with payout > 0)
+        # Rule 1: reject_policy action with a non-zero payout amount
         with pytest.raises(ValidationError) as exc_info:
             SupportTriageTrace(**raw_output)
 
         assert "A rejected refund cannot authorize a payout amount greater than zero." in str(
             exc_info.value
         )
+
+    elif trace["id"] == "fail_pydantic_refund_missing_order_id":
+        # Rule 2: issue_refund action with no order_id — payout is untraceable
+        with pytest.raises(ValidationError) as exc_info:
+            SupportTriageTrace(**raw_output)
+
+        assert "Cannot issue a refund without a valid order_id." in str(exc_info.value)
+
+    elif trace["id"] == "fail_pydantic_high_confidence_escalation":
+        # Rule 3: escalate_to_human action with confidence_score >= 0.85
+        with pytest.raises(ValidationError) as exc_info:
+            SupportTriageTrace(**raw_output)
+
+        assert "High confidence actions must not be routed to human escalation." in str(
+            exc_info.value
+        )
+
     else:
         # All other traces must strictly adhere to the SupportTriageTrace contract
         validated = SupportTriageTrace(**raw_output)

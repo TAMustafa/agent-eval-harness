@@ -30,8 +30,40 @@
     }
   },
   {
+    "id": "pass_valid_escalation",
+    "description": "Legitimate escalation to a human agent for a suspected duplicate-charge fraud dispute that the agent cannot resolve autonomously. Low confidence score is appropriate. Should PASS Tier 1 and Tier 2.",
+    "customer_input": "I was charged $340 twice for order #5512, but your system only shows one transaction. I need this resolved urgently.",
+    "retrieved_policy": [
+      "Duplicate charge disputes must be reviewed by the billing team and cannot be resolved automatically.",
+      "Escalate to a human agent when fraud or duplicate transaction indicators are detected."
+    ],
+    "agent_raw_output": {
+      "action": "escalate_to_human",
+      "order_id": "5512",
+      "refund_amount": 0.0,
+      "customer_reply": "I understand this is urgent. I've escalated your duplicate charge dispute for order #5512 to our billing team, who will review and contact you within 24 hours.",
+      "confidence_score": 0.61
+    }
+  },
+  {
+    "id": "pass_goodwill_partial_refund",
+    "description": "Valid goodwill partial refund for a late delivery with outer packaging damage, within the discretionary goodwill credit policy. Should PASS Tier 1 and Tier 2.",
+    "customer_input": "My package for order #7723 arrived 3 weeks late and the outer box was completely crushed. Some items were damaged. It's been 35 days now.",
+    "retrieved_policy": [
+      "Deliveries delayed by more than 10 business days qualify for a partial goodwill credit of up to 50% of the order value, regardless of the standard return window.",
+      "Damage caused during shipping is eligible for a goodwill credit upon agent review."
+    ],
+    "agent_raw_output": {
+      "action": "issue_refund",
+      "order_id": "7723",
+      "refund_amount": 22.50,
+      "customer_reply": "I'm sorry for the delay and the packaging damage on order #7723. I've issued a goodwill credit of $22.50 to your original payment method, which should appear within 3-5 business days.",
+      "confidence_score": 0.87
+    }
+  },
+  {
     "id": "fail_pydantic_schema_business_rule",
-    "description": "Contradictory state: action is reject_policy but payout > 0. Should FAIL Tier 1 deterministic guardrail.",
+    "description": "Contradictory state: action is reject_policy but payout > 0. Should FAIL Tier 1 deterministic guardrail (Rule 1).",
     "customer_input": "I want a refund for order #1029. It wasn't what I expected.",
     "retrieved_policy": [
       "Opened clearance items are final sale and non-refundable."
@@ -45,8 +77,40 @@
     }
   },
   {
+    "id": "fail_pydantic_refund_missing_order_id",
+    "description": "Agent authorizes a refund but omits the required order_id, making the payout untraceable and unauditable. Should FAIL Tier 1 deterministic guardrail (Rule 2: refund traceability).",
+    "customer_input": "I never received my package and I want my money back.",
+    "retrieved_policy": [
+      "Customers who do not receive their order within the estimated delivery window are entitled to a full refund.",
+      "All refunds must be linked to a valid order ID for audit and traceability purposes."
+    ],
+    "agent_raw_output": {
+      "action": "issue_refund",
+      "order_id": null,
+      "refund_amount": 79.99,
+      "customer_reply": "I've processed a full refund of $79.99 for your undelivered package.",
+      "confidence_score": 0.89
+    }
+  },
+  {
+    "id": "fail_pydantic_high_confidence_escalation",
+    "description": "Agent routes a clear-cut, policy-covered request to a human agent despite a very high confidence score, wasting human review capacity. Should FAIL Tier 1 deterministic guardrail (Rule 3: human routing economics).",
+    "customer_input": "Can I return a swimsuit I wore once to the beach? I still have the receipt.",
+    "retrieved_policy": [
+      "Worn or used clothing items are non-returnable regardless of receipt or purchase date.",
+      "Swimwear and undergarments are excluded from all return and exchange policies for hygiene reasons."
+    ],
+    "agent_raw_output": {
+      "action": "escalate_to_human",
+      "order_id": null,
+      "refund_amount": 0.0,
+      "customer_reply": "I've passed your request to a member of our team who will review whether a return exception can be made.",
+      "confidence_score": 0.91
+    }
+  },
+  {
     "id": "fail_deepeval_hallucination",
-    "description": "Passes Tier 1 syntax, but fabricates a 180-day worldwide policy contradicting retrieval context. FAILS Tier 2 Faithfulness.",
+    "description": "Passes Tier 1 syntax, but fabricates a 180-day worldwide return window that directly contradicts the retrieval context. Should FAIL Tier 2 FaithfulnessMetric.",
     "customer_input": "What is your return policy for international shipments?",
     "retrieved_policy": [
       "International sales are final and cannot be returned or exchanged under any circumstances."
@@ -61,7 +125,7 @@
   },
   {
     "id": "fail_deepeval_relevancy",
-    "description": "Passes Tier 1 syntax, but evades return policy question and talks about shipping. FAILS Tier 2 Answer Relevancy.",
+    "description": "Passes Tier 1 syntax, but completely evades the customer's question about opened toner returns and pivots to shipping promotions instead. Should FAIL Tier 2 AnswerRelevancyMetric.",
     "customer_input": "Can I return an opened pack of printer toner?",
     "retrieved_policy": [
       "Consumables like toner and ink cannot be returned once the protective seal is broken."
@@ -70,7 +134,7 @@
       "action": "reject_policy",
       "order_id": null,
       "refund_amount": 0.0,
-      "customer_reply": "Thank you for reaching out! We offer free two-day shipping on orders over $50 and express courier delivery.",
+      "customer_reply": "Thank you for reaching out! We offer free two-day shipping on orders over $50 and express courier delivery to over 30 countries.",
       "confidence_score": 0.82
     }
   }

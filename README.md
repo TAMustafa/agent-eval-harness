@@ -48,7 +48,7 @@ agent-eval-harness/
 ├── README.md               # Setup and architecture documentation
 ├── requirements.txt        # Pydantic, DeepEval, Pytest, python-dotenv
 ├── dataset/
-│   └── traces.json         # 5 production traces (passing and targeted failures)
+│   └── traces.json         # 9 production traces (passing and targeted failures)
 ├── schemas.py              # Pydantic data contract & business rule validators
 └── test_evals.py           # Two-tiered Pytest test suite
 ```
@@ -132,9 +132,13 @@ deepeval test run test_evals.py
 | :--- | :--- | :--- | :--- |
 | `pass_valid_refund` | **PASS** | **PASS** | Valid damaged item refund authorized within 30 days. |
 | `pass_valid_rejection` | **PASS** | **PASS** | Proper policy rejection for 6-month-old electronics. |
-| `fail_pydantic_schema_business_rule` | **FAIL** (ValidationError) | **SKIPPED** (Fast-Fail) | Catches bug: rejection action authorizing a payout amount ($30.00). |
-| `fail_deepeval_hallucination` | **PASS** | **FAIL** (Faithfulness < 0.7) | Catches fabricated 180-day worldwide policy contradiction. |
-| `fail_deepeval_relevancy` | **PASS** | **FAIL** (Relevancy < 0.7) | Catches response evading question about opened toner returns. |
+| `pass_valid_escalation` | **PASS** | **PASS** | Legitimate human escalation for a duplicate-charge fraud dispute at low confidence. |
+| `pass_goodwill_partial_refund` | **PASS** | **PASS** | Discretionary goodwill credit for a late, damaged delivery outside the standard window. |
+| `fail_pydantic_schema_business_rule` | **FAIL** (Rule 1 — ValidationError) | **SKIPPED** (Fast-Fail) | Catches bug: `reject_policy` action authorizing a non-zero payout ($30.00). |
+| `fail_pydantic_refund_missing_order_id` | **FAIL** (Rule 2 — ValidationError) | **SKIPPED** (Fast-Fail) | Catches bug: `issue_refund` action with no `order_id`, making the payout untraceable. |
+| `fail_pydantic_high_confidence_escalation` | **FAIL** (Rule 3 — ValidationError) | **SKIPPED** (Fast-Fail) | Catches bug: unnecessary human escalation at confidence 0.91 on a clear-cut policy question. |
+| `fail_deepeval_hallucination` | **PASS** | **FAIL** (Faithfulness < 0.7) | Catches fabricated 180-day worldwide return window that contradicts the retrieved policy. |
+| `fail_deepeval_relevancy` | **PASS** | **FAIL** (Relevancy < 0.7) | Catches response that evades the toner return question and pivots to shipping promotions. |
 
 ---
 
